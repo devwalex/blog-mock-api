@@ -1,7 +1,5 @@
 const httpStatus = require("http-status");
-const bbcNews = require("../store/bbc.json");
-const cnnNews = require("../store/cnn.json");
-const allNews = [...bbcNews, ...cnnNews];
+const allNews = require("../store/data.json");
 
 const getAllNews = (req, res) => {
   const category = req.query.category;
@@ -29,10 +27,15 @@ const getSingleNews = (req, res) => {
     });
   }
 
+  const related_news = getRelatedNews(singleNews);
+
   return res.status(httpStatus.OK).send({
     success: true,
     message: "Returned news successfully",
-    result: singleNews,
+    result: {
+      data: singleNews,
+      related_news: related_news
+    },
   });
 };
 
@@ -41,11 +44,7 @@ const getNewsByType = (req, res) => {
   const category = req.query.category;
   let news = [];
 
-  if (type == "bbc") {
-    news = bbcNews;
-  } else if (type == "cnn") {
-    news = cnnNews;
-  }
+  news = allNews.filter((_news) => _news.type === type)
 
   if (category) {
     news = getNewsByCategory(news, category);
@@ -60,6 +59,10 @@ const getNewsByType = (req, res) => {
 
 const getNewsByCategory = (news, category) => {
   return news.filter((_news) => _news.category === category);
+};
+
+const getRelatedNews = (news) => {
+  return allNews.filter((_news) => _news.category === news.category && _news.id !== news.id && _news.type === news.type);
 };
 
 module.exports = { getAllNews, getSingleNews, getNewsByType };
